@@ -66,59 +66,7 @@ async def start_handler(bot: Client, m: Message):
     )
 
 
-@NubBot.on_message(filters.private & (filters.video | filters.document) & ~filters.edited)
-async def videos_handler(bot: Client, m: Message):
-    await AddUserToDatabase(bot, m)
-    Fsub = await ForceSub(bot, m)
-    if Fsub == 400:
-        return
-    media = m.video or m.document
-    if media.file_name is None:
-        await m.reply_text("File Name Not Found!")
-        return
-    if media.file_name.rsplit(".", 1)[-1].lower() not in ["mp4", "mkv", "webm"]:
-        await m.reply_text("This Video Format not Allowed!\nOnly send MP4 or MKV or WEBM.", quote=True)
-        return
-    if QueueDB.get(m.from_user.id, None) is None:
-        FormtDB.update({m.from_user.id: media.file_name.rsplit(".", 1)[-1].lower()})
-    if (FormtDB.get(m.from_user.id, None) is not None) and (media.file_name.rsplit(".", 1)[-1].lower() != FormtDB.get(m.from_user.id)):
-        await m.reply_text(f"First you sent a {FormtDB.get(m.from_user.id).upper()} video so now send only that type of video.", quote=True)
-        return
-    dir = f"{Config.DOWN_PATH}/{m.from_user.id}/"
-    if os.path.exists(dir):
-        await m.reply_text("Sorry Unkil,\nAlready One in Progress!\nDon't Spam Plox.")
-        return
-    isInGap, sleepTime = await CheckTimeGap(m.from_user.id)
-    if isInGap is True:
-        await m.reply_text(f"Sorry Sir,\nNo Flooding Allowed!\nSend Video After `{str(sleepTime)}s` !!", quote=True)
-    else:
-        editable = await m.reply_text("Please Wait ...", quote=True)
-        MessageText = "Okay,\nNow Send Me Next Video or Press **Merge Now** Button!"
-        if QueueDB.get(m.from_user.id, None) is None:
-            QueueDB.update({m.from_user.id: []})
-        if (len(QueueDB.get(m.from_user.id)) >= 0) and (len(QueueDB.get(m.from_user.id)) <= Config.MAX_VIDEOS):
-            QueueDB.get(m.from_user.id).append(m.message_id)
-            if ReplyDB.get(m.from_user.id, None) is not None:
-                await bot.delete_messages(chat_id=m.chat.id, message_ids=ReplyDB.get(m.from_user.id))
-            if FormtDB.get(m.from_user.id, None) is None:
-                FormtDB.update({m.from_user.id: media.file_name.rsplit(".", 1)[-1].lower()})
-            await asyncio.sleep(Config.TIME_GAP)
-            if len(QueueDB.get(m.from_user.id)) == Config.MAX_VIDEOS:
-                MessageText = "Okay Unkil, Now Just Press **Merge Now** Button Plox!"
-            markup = await MakeButtons(bot, m, QueueDB)
-            await editable.edit(text="Your Video Added to Queue!")
-            reply_ = await m.reply_text(
-                text=MessageText,
-                reply_markup=InlineKeyboardMarkup(markup),
-                quote=True
-            )
-            ReplyDB.update({m.from_user.id: reply_.message_id})
-        elif len(QueueDB.get(m.from_user.id)) > Config.MAX_VIDEOS:
-            markup = await MakeButtons(bot, m, QueueDB)
-            await editable.edit(
-                text=f"Sorry Unkil,\nMax {str(Config.MAX_VIDEOS)} Videos Allowed to Merge Together!\nPress **Merge Now** Button Now!",
-                reply_markup=InlineKeyboardMarkup(markup)
-            )
+
 
 
 @NubBot.on_message(filters.private & filters.photo & ~filters.edited)
