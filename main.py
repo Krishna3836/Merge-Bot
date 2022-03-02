@@ -111,7 +111,7 @@ async def rename_handler(bot: Client, event: Message):
                 try:
                     await bot.download_media(
                         message=event,
-                        file_name=new_file_name,
+                        file_name=file_dl_path,
                         progress=progress_for_pyrogram,
                         progress_args=(
                             "**Downloading... 😴**",
@@ -132,7 +132,7 @@ async def rename_handler(bot: Client, event: Message):
                         await UploadFile(
                             bot,
                             reply_,
-                            file_path=new_file_name,
+                            file_path=file_dl_path,
                             file_size=media.file_size
                         )
                     else:
@@ -143,7 +143,7 @@ async def rename_handler(bot: Client, event: Message):
                             await UploadAudio(
                                 bot,
                                 reply_,
-                                file_path=new_file_name,
+                                file_path=file_dl_path,
                                 file_size=media.file_size,
                                 duration=duration_,
                                 performer=performer_,
@@ -157,7 +157,7 @@ async def rename_handler(bot: Client, event: Message):
                             await UploadVideo(
                                 bot,
                                 reply_,
-                                file_path=new_file_name,
+                                file_path=file_dl_path,
                                 file_size=media.file_size,
                                 default_thumb=thumb_,
                                 duration=duration_,
@@ -168,7 +168,7 @@ async def rename_handler(bot: Client, event: Message):
                             await UploadFile(
                                 bot,
                                 reply_,
-                                file_path=new_file_name,
+                                file_path=file_dl_path,
                                 file_size=media.file_size
                             )
                 except Exception as err:
