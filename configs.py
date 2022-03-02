@@ -18,7 +18,19 @@ class Config(object):
     MONGODB_URI = os.environ.get("MONGODB_URI")
     BROADCAST_AS_COPY = bool(os.environ.get("BROADCAST_AS_COPY", False))
     BOT_OWNER = int(os.environ.get("BOT_OWNER", 1445283714))
-
+    SLEEP_TIME = int(os.environ.get("SLEEP_TIME", 5))
+    BOT_OWNER = int(os.environ.get("BOT_OWNER", 1445283714))
+    CAPTION = "**© By @Tellybots 💕**"
+    UPDATES_CHANNEL = os.environ.get("UPDATES_CHANNEL", None)
+    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", -100))
+    MONGODB_URI = os.environ.get("MONGODB_URI", "")
+    DOWNLOAD_PATH = os.environ.get("DOWNLOAD_PATH", "./downloads")
+    BROADCAST_AS_COPY = bool(os.environ.get("BROADCAST_AS_COPY", False))
+    ONE_PROCESS_ONLY = bool(os.environ.get("ONE_PROCESS_ONLY", False))
+    DOWNLOAD_LOCATION = "./DOWNLOADS"
+    DOWNLOAD_START ="Processing To Download"
+    # Telegram maximum file upload size
+    SAVED_RECVD_DOC_FILE ="Your 🗃️ Saved"
     START_TEXT = """
 Hi Unkil, I am Video Merge Bot!
 I can Merge Multiple Videos in One Video. Video Formats should be same.
