@@ -69,6 +69,119 @@ async def start_handler(bot: Client, m: Message):
 
 
 
+
+
+
+
+
+@NubBot.on_message(filters.private & (filters.video | filters.document | filters.audio))
+async def rename_handler(bot: Client, event: Message):
+    await AddUserToDatabase(bot, event)
+    FSub = await ForceSub(bot, event)
+    if FSub == 400:
+        return
+    isInGap, t_ = await CheckTimeGap(user_id=event.from_user.id)
+    if (Config.ONE_PROCESS_ONLY is False) and (isInGap is True):
+        await event.reply_text(f"**Please use me after {str(t_)} seconds !!**", quote=True)
+        return
+    elif (Config.ONE_PROCESS_ONLY is True) and (isInGap is True):
+        await event.reply_text("**Please use me after {t_}**", quote=True)
+        return
+    media = event.video or event.audio or event.document
+    if media and media.file_name:
+        reply_ = await event.reply_text(
+            text=f"**👀 Enter a New File Name for this File 📂\nNote: `Extension not Required`**",
+            quote=True
+        )
+        download_location = f"{Config.DOWNLOAD_PATH}/{str(event.from_user.id)}/{str(time.time())}/"
+        if os.path.exists(download_location):
+            os.makedirs(download_location)
+        try:
+            ask_: Message = await bot.listen(event.chat.id, timeout=300)
+            if ask_.text and (ask_.text.startswith("/") is False):
+                ascii_ = ''.join([i if (i in string.digits or i in string.ascii_letters or i == " ") else "" for i in ask_.text.rsplit('.', 1)[0]])
+                new_file_name = f"{download_location}{ascii_.replace(' ', ' ')}.{media.file_name.rsplit('.', 1)[-1]}"
+                if len(new_file_name) > 255:
+                    await reply_.edit("**😕 Make it Smaller... Don't write essays!!**")
+                    return
+                await ask_.delete(True)
+                await reply_.edit("**📥 Trying to Download...**")
+                await asyncio.sleep(Config.SLEEP_TIME)
+                c_time = time.time()
+                try:
+                    await bot.download_media(
+                        message=event,
+                        file_name=new_file_name,
+                        progress=progress_for_pyrogram,
+                        progress_args=(
+                            "**Downloading... 😴**",
+                            reply_,
+                            c_time
+                        )
+                    )
+                    if not os.path.lexists(new_file_name):
+                        try:
+                            await reply_.edit("**No File Found 😒**")
+                        except:
+                            print(f"**🙄 Unable to Find File for {str(event.from_user.id)} !!**")
+                        return
+                    await asyncio.sleep(Config.SLEEP_TIME)
+                    await reply_.edit("**📤 Trying to Upload...**")
+                    upload_as_doc = await db.get_upload_as_doc(event.from_user.id)
+                    if upload_as_doc is True:
+                        await UploadFile(
+                            bot,
+                            reply_,
+                            file_path=new_file_name,
+                            file_size=media.file_size
+                        )
+                    else:
+                        if event.audio:
+                            duration_ = event.audio.duration if event.audio.duration else 0
+                            performer_ = event.audio.performer if event.audio.performer else None
+                            title_ = event.audio.title if event.audio.title else None
+                            await UploadAudio(
+                                bot,
+                                reply_,
+                                file_path=new_file_name,
+                                file_size=media.file_size,
+                                duration=duration_,
+                                performer=performer_,
+                                title=title_
+                            )
+                        elif event.video or (event.document and event.document.mime_type.startswith("video/")):
+                            thumb_ = event.video.thumbs[0] if ((event.document is None) and (event.video.thumbs is not None)) else None
+                            duration_ = event.video.duration if ((event.document is None) and (event.video.thumbs is not None)) else 0
+                            width_ = event.video.width if ((event.document is None) and (event.video.thumbs is not None)) else 0
+                            height_ = event.video.height if ((event.document is None) and (event.video.thumbs is not None)) else 0
+                            await UploadVideo(
+                                bot,
+                                reply_,
+                                file_path=new_file_name,
+                                file_size=media.file_size,
+                                default_thumb=thumb_,
+                                duration=duration_,
+                                width=width_,
+                                height=height_
+                            )
+                        else:
+                            await UploadFile(
+                                bot,
+                                reply_,
+                                file_path=new_file_name,
+                                file_size=media.file_size
+                            )
+                except Exception as err:
+                    try:
+                        await reply_.edit(f"**Error:** `{err}`")
+                    except:
+                        print(f"**Error:** `{err}`")
+            elif ask_.text and (ask_.text.startswith("/") is True):
+                await reply_.edit("**❌ Cancelled the Ongoing Process... 😐**")
+        except TimeoutError:
+            await reply_.edit("**🤬 Do you really want to rename then please enter your new File Name... I'm not only for you 👀**")
+
+
 @NubBot.on_message(filters.private & filters.photo & ~filters.edited)
 async def photo_handler(bot: Client, m: Message):
     await AddUserToDatabase(bot, m)
